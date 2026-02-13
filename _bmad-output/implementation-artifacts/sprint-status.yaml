@@ -1,0 +1,76 @@
+# generated: 2026-02-13
+# project: FitnessCoach
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog -> in-progress: Automatically when first story is created (via create-story)
+#   - in-progress -> done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-02-13
+project: FitnessCoach
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: in-progress
+  1-1-project-scaffold-mcp-server-bootstrap: ready-for-dev
+  1-2-database-connection-migration-infrastructure: backlog
+  1-3-exercise-library-with-browse-search: backlog
+  1-4-coaching-persona-resource: backlog
+  1-5-structured-logging-system-status: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-plan-schema-view-current-plan: backlog
+  2-2-update-training-plan: backlog
+  2-3-injury-responsive-plan-adjustment: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-log-completed-session: backlog
+  3-2-injury-status-ad-hoc-injury-logging: backlog
+  3-3-injury-protocol-data-health-observations: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-progress-trends-benchmarks: backlog
+  4-2-bottleneck-identification-running-volume-rule: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-scheduling-data-constraints: backlog
+  5-2-schedule-confirmation-event-management: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-check-in-composite-tool: backlog
+  6-2-coaching-intelligence-data: backlog
+  epic-6-retrospective: optional
