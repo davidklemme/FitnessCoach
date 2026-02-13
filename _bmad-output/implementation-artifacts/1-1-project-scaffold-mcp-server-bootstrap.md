@@ -1,6 +1,6 @@
 # Story 1.1: Project Scaffold & MCP Server Bootstrap
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -27,40 +27,40 @@ so that I have a working foundation to build all fitness coaching tools on.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Initialize project (AC: 1)
-  - [ ] `npm init` — set name, version, type: "module" in package.json
-  - [ ] Create `.nvmrc` with `22` (Node v22 LTS)
-  - [ ] Install production dependencies: `@modelcontextprotocol/sdk`, `drizzle-orm`, `better-sqlite3`, `zod`, `dotenv`
-  - [ ] Install dev dependencies: `typescript`, `drizzle-kit`, `@types/better-sqlite3`, `vitest`, `tsx`, `tsup`
-  - [ ] Create `tsconfig.json` (strict, ESM, NodeNext module resolution)
-  - [ ] Create `tsup.config.ts` (entry: `src/index.ts`, format: esm, single output)
-  - [ ] Create `vitest.config.ts`
-  - [ ] Create `drizzle.config.ts` (SQLite driver, schema path, migrations folder)
-  - [ ] Add npm scripts: `dev`, `build`, `test`, `db:generate`, `db:migrate`
-  - [ ] Create `.env.example` with documented variables
-  - [ ] Update `.gitignore` (already has node_modules, dist, .env, *.db*)
+- [x] Task 1: Initialize project (AC: 1)
+  - [x] `npm init` — set name, version, type: "module" in package.json
+  - [x] Create `.nvmrc` with `22` (Node v22 LTS)
+  - [x] Install production dependencies: `@modelcontextprotocol/sdk`, `drizzle-orm`, `better-sqlite3`, `zod`, `dotenv`
+  - [x] Install dev dependencies: `typescript`, `drizzle-kit`, `@types/better-sqlite3`, `vitest`, `tsx`, `tsup`
+  - [x] Create `tsconfig.json` (strict, ESM, NodeNext module resolution)
+  - [x] Create `tsup.config.ts` (entry: `src/index.ts`, format: esm, single output)
+  - [x] Create `vitest.config.ts`
+  - [x] Create `drizzle.config.ts` (SQLite driver, schema path, migrations folder)
+  - [x] Add npm scripts: `dev`, `build`, `test`, `db:generate`, `db:migrate`
+  - [x] Create `.env.example` with documented variables
+  - [x] Update `.gitignore` (already has node_modules, dist, .env, *.db*)
 
-- [ ] Task 2: Environment config with validation (AC: 2)
-  - [ ] Create `src/config.ts` — dotenv load + zod schema for env vars
-  - [ ] Required env vars: `DATABASE_URL` (SQLite file path), `TRAINER_MD_PATH` (path to TRAINER.md)
-  - [ ] Fail fast on startup if validation fails, with clear messages per missing var
+- [x] Task 2: Environment config with validation (AC: 2)
+  - [x] Create `src/config.ts` — dotenv load + zod schema for env vars
+  - [x] Required env vars: `DATABASE_URL` (SQLite file path), `TRAINER_MD_PATH` (path to TRAINER.md)
+  - [x] Fail fast on startup if validation fails, with clear messages per missing var
 
-- [ ] Task 3: MCP server skeleton (AC: 2, 3)
-  - [ ] Create `src/server.ts` — `McpServer` instance with name "fitness-coach" and version from package.json
-  - [ ] Create `src/index.ts` — entry point: import server, connect `StdioServerTransport`, handle errors
-  - [ ] Zero tools registered at this stage — server should connect and be discoverable
+- [x] Task 3: MCP server skeleton (AC: 2, 3)
+  - [x] Create `src/server.ts` — `McpServer` instance with name "fitness-coach" and version from package.json
+  - [x] Create `src/index.ts` — entry point: import server, connect `StdioServerTransport`, handle errors
+  - [x] Zero tools registered at this stage — server should connect and be discoverable
 
-- [ ] Task 4: Build and verify (AC: 1, 3)
-  - [ ] `npm run build` produces `dist/index.js`
-  - [ ] Bundled output runs without errors: `node dist/index.js` (connects stdio, exits cleanly if no client)
-  - [ ] Write a smoke test: server instantiation, config validation, transport connection
+- [x] Task 4: Build and verify (AC: 1, 3)
+  - [x] `npm run build` produces `dist/index.js`
+  - [x] Bundled output runs without errors: `node dist/index.js` (connects stdio, exits cleanly if no client)
+  - [x] Write a smoke test: server instantiation, config validation, transport connection
 
-- [ ] Task 5: Create placeholder directories
-  - [ ] `src/db/` — for connection, schema, queries, migrate
-  - [ ] `src/tools/` — for tool handlers
-  - [ ] `src/resources/` — for trainer-persona.ts
-  - [ ] `src/lib/` — for logger and shared utilities
-  - [ ] `drizzle/migrations/` — for generated migrations
+- [x] Task 5: Create placeholder directories
+  - [x] `src/db/` — for connection, schema, queries, migrate
+  - [x] `src/tools/` — for tool handlers
+  - [x] `src/resources/` — for trainer-persona.ts
+  - [x] `src/lib/` — for logger and shared utilities
+  - [x] `drizzle/migrations/` — for generated migrations
 
 ## Dev Notes
 
@@ -280,8 +280,38 @@ This story produces a bare MCP server that connects, validates config, and has z
 
 ### Agent Model Used
 
+Claude Opus 4.6
+
 ### Debug Log References
 
 ### Completion Notes List
 
+- Task 1: Project initialized with package.json (type: module), .nvmrc (22), all production and dev dependencies installed, config files created (tsconfig, tsup, vitest, drizzle), npm scripts added, .env.example created. .gitignore already sufficient.
+- Task 2: src/config.ts created with dotenv + zod validation. Validates DATABASE_URL and TRAINER_MD_PATH, fails fast with per-field error messages.
+- Task 3: src/server.ts creates McpServer with name "fitness-coach" and version read from package.json. src/index.ts imports config (fail-fast), creates StdioServerTransport, connects server. Zero tools registered.
+- Task 4: `npm run build` produces dist/index.js (1.32 KB). Smoke tests: server instantiation test (server.test.ts), config validation tests (config.test.ts) — 5 tests, all passing.
+- Task 5: Placeholder directories created with .gitkeep: src/db, src/tools, src/resources, src/lib, drizzle/migrations.
+- Note: zod resolved to v4.3.6 (latest npm). Architecture specified ^3.x but SDK is compatible. No API differences for our usage (z.object, z.string, safeParse all identical).
+
 ### File List
+
+- package.json (modified)
+- package-lock.json (new)
+- .nvmrc (new)
+- tsconfig.json (new)
+- tsup.config.ts (new)
+- vitest.config.ts (new)
+- drizzle.config.ts (new)
+- .env.example (new)
+- src/config.ts (new)
+- src/config.test.ts (new)
+- src/server.ts (new)
+- src/server.test.ts (new)
+- src/index.ts (new)
+- src/db/.gitkeep (new)
+- src/tools/.gitkeep (new)
+- src/resources/.gitkeep (new)
+- src/lib/.gitkeep (new)
+- drizzle/migrations/.gitkeep (new)
+- _bmad-output/implementation-artifacts/sprint-status.yaml (modified)
+- _bmad-output/implementation-artifacts/1-1-project-scaffold-mcp-server-bootstrap.md (modified)
