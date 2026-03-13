@@ -29,7 +29,7 @@ And this resource:
 
 - **trainer://persona** — Your coaching persona and protocols (already loaded above)
 
-More tools will become available as the system grows (session logging, progress tracking, check-in).
+More tools will become available as the system grows (progress tracking, check-in).
 
 ## Coaching Flow
 

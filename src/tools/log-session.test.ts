@@ -346,6 +346,41 @@ describe("log_session — injury logging", () => {
     const injuries = testDb.select().from(schema.injuryStatusLog).all();
     expect(injuries).toHaveLength(2);
   });
+
+  it("appends injury log on session upsert (injury is INSERT-only)", async () => {
+    // First call: session + injury
+    const input1: LogSessionInput = {
+      ...basicInput,
+      injury: { pain_level: 3, location: "left shoulder", escalation_stage: "monitor" },
+    };
+    await logSession(input1, testDb, sqlite);
+
+    // Second call: upsert same session with different injury
+    const input2: LogSessionInput = {
+      ...basicInput,
+      rpe: 8,
+      injury: { pain_level: 5, location: "left shoulder", escalation_stage: "reduce_volume" },
+    };
+    await logSession(input2, testDb, sqlite);
+
+    // Session upserted (1 row), but injuries appended (2 rows)
+    const logs = testDb.select().from(schema.sessionLogs).all();
+    expect(logs).toHaveLength(1);
+    expect(logs[0].rpe).toBe(8);
+
+    const injuries = testDb.select().from(schema.injuryStatusLog).all();
+    expect(injuries).toHaveLength(2);
+    expect(injuries[0].painLevel).toBe(3);
+    expect(injuries[1].painLevel).toBe(5);
+  });
+
+  it("normalizes injury location to trimmed lowercase", async () => {
+    const parsed = logSessionSchema.parse({
+      ...basicInput,
+      injury: { pain_level: 3, location: " Left Shoulder " },
+    });
+    expect(parsed.injury!.location).toBe("left shoulder");
+  });
 });
 
 // ─── Story 3.3: Health Observations ─────────────────────────────────────────
@@ -455,6 +490,22 @@ describe("log_session — health observations", () => {
     expect(testDb.select().from(schema.injuryStatusLog).all()).toHaveLength(1);
     expect(testDb.select().from(schema.healthObservations).all()).toHaveLength(1);
   });
+
+  it("returns isError on health-only DB failure", async () => {
+    const closedSqlite = new Database(":memory:");
+    const closedDb = drizzle(closedSqlite, { schema });
+    closedSqlite.close();
+
+    const input: LogSessionInput = {
+      date: "2026-03-13",
+      session_type: "rest",
+      session_order: 1,
+      health: { sleep_quality: 4, energy_level: 3, soreness_level: 2 },
+    };
+    const result = await logSession(input, closedDb, closedSqlite);
+    expect((result as { isError?: boolean }).isError).toBe(true);
+    expect(result.content[0].text).toContain("Failed to log session");
+  });
 });
 
 // ─── Schema Validation (AC 3.1-5, AC 3.2-4) ────────────────────────────────
@@ -540,5 +591,43 @@ describe("logSessionSchema validation", () => {
       injury: { pain_level: 0, location: "left shoulder" },
     });
     expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid escalation_stage enum value", () => {
+    const result = logSessionSchema.safeParse({
+      date: "2026-03-10",
+      session_type: "injury",
+      ad_hoc_injury: true,
+      injury: { pain_level: 5, location: "knee", escalation_stage: "stage2" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid severity enum value", () => {
+    const result = logSessionSchema.safeParse({
+      date: "2026-03-10",
+      session_type: "injury",
+      ad_hoc_injury: true,
+      injury: { pain_level: 5, location: "knee", severity: "bad" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty health object (no fields)", () => {
+    const result = logSessionSchema.safeParse({
+      date: "2026-03-10",
+      session_type: "rest",
+      health: {},
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects exercises as empty array", () => {
+    const result = logSessionSchema.safeParse({
+      date: "2026-03-10",
+      session_type: "push",
+      exercises: [],
+    });
+    expect(result.success).toBe(false);
   });
 });

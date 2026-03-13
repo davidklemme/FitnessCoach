@@ -57,6 +57,13 @@
       "when": 1773437102645,
       "tag": "0007_overjoyed_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1773438369566,
+      "tag": "0008_luxuriant_steel_serpent",
+      "breakpoints": true
     }
   ]
 }

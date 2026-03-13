@@ -140,16 +140,12 @@ export const injuryStatusLog = sqliteTable(
   ]
 );
 
-export const healthObservations = sqliteTable(
-  "health_observations",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    date: text("date").notNull().unique(),
-    sleepQuality: integer("sleep_quality"),
-    energyLevel: integer("energy_level"),
-    sorenessLevel: integer("soreness_level"),
-    notes: text("notes"),
-    createdAt: text("created_at").notNull(),
-  },
-  (table) => [index("idx_health_observations_date").on(table.date)]
-);
+export const healthObservations = sqliteTable("health_observations", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  date: text("date").notNull().unique(),
+  sleepQuality: integer("sleep_quality"),
+  energyLevel: integer("energy_level"),
+  sorenessLevel: integer("soreness_level"),
+  notes: text("notes"),
+  createdAt: text("created_at").notNull(),
+});

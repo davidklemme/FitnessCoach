@@ -32,51 +32,63 @@ const injurySchema = z.object({
     .min(0)
     .max(10)
     .describe("Pain level (0-10)"),
-  location: z.string().describe("Body location of injury (e.g. 'left shoulder', 'right knee')"),
+  location: z
+    .string()
+    .transform((s) => s.trim().toLowerCase())
+    .describe("Body location of injury (e.g. 'left shoulder', 'right knee')"),
   trigger_exercise_id: z
     .number()
     .int()
     .optional()
     .describe("Exercise ID that triggered/aggravated the injury"),
   severity: z
-    .string()
+    .enum(["mild", "moderate", "severe"])
     .optional()
-    .describe("Severity description (e.g. 'mild', 'moderate', 'severe')"),
+    .describe("Severity: mild, moderate, or severe"),
   affected_areas: z
     .array(z.string())
     .optional()
     .describe("Affected muscle groups or body areas"),
   escalation_stage: z
-    .string()
+    .enum(["monitor", "reduce_volume", "low_impact_only", "forced_rest"])
     .optional()
     .describe("Protocol stage: monitor, reduce_volume, low_impact_only, forced_rest"),
   notes: z.string().optional().describe("Injury-specific notes"),
 });
 
-const healthSchema = z.object({
-  sleep_quality: z
-    .number()
-    .int()
-    .min(1)
-    .max(5)
-    .optional()
-    .describe("Sleep quality (1-5)"),
-  energy_level: z
-    .number()
-    .int()
-    .min(1)
-    .max(5)
-    .optional()
-    .describe("Energy level (1-5)"),
-  soreness_level: z
-    .number()
-    .int()
-    .min(1)
-    .max(5)
-    .optional()
-    .describe("Soreness level (1-5)"),
-  notes: z.string().optional().describe("Health observation notes"),
-});
+const healthSchema = z
+  .object({
+    sleep_quality: z
+      .number()
+      .int()
+      .min(1)
+      .max(5)
+      .optional()
+      .describe("Sleep quality (1-5)"),
+    energy_level: z
+      .number()
+      .int()
+      .min(1)
+      .max(5)
+      .optional()
+      .describe("Energy level (1-5)"),
+    soreness_level: z
+      .number()
+      .int()
+      .min(1)
+      .max(5)
+      .optional()
+      .describe("Soreness level (1-5)"),
+    notes: z.string().optional().describe("Health observation notes"),
+  })
+  .refine(
+    (data) =>
+      data.sleep_quality !== undefined ||
+      data.energy_level !== undefined ||
+      data.soreness_level !== undefined ||
+      data.notes !== undefined,
+    { message: "Health observations must include at least one field" }
+  );
 
 export const logSessionSchema = z.object({
   date: z
@@ -108,6 +120,7 @@ export const logSessionSchema = z.object({
   notes: z.string().optional().describe("Free-text session notes"),
   exercises: z
     .array(exerciseEntrySchema)
+    .min(1, "exercises array must have at least one entry when provided")
     .optional()
     .describe("Exercises performed in this session (omit for ad-hoc injury or health-only)"),
   ad_hoc_injury: z

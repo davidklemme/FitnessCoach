@@ -88,7 +88,7 @@ server.tool(
       raw = JSON.parse(params.input);
     } catch {
       return {
-        content: [{ type: "text" as const, text: "Invalid JSON input. Provide a valid JSON object with date, session_type, and exercises." }],
+        content: [{ type: "text" as const, text: "Invalid JSON input. Provide a valid JSON object with date, session_type, and exercises/injury/health data." }],
         isError: true,
       };
     }
