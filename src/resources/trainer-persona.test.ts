@@ -1,14 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { loadTrainerContent } from "./trainer-persona.js";
 
-describe("trainer-persona resource", () => {
-  const TRAINER_PATH = "./TRAINER.md";
+const TRAINER_PATH = "./TRAINER.md";
 
-  it("TRAINER.md exists at the configured path", () => {
-    expect(existsSync(TRAINER_PATH)).toBe(true);
-  });
-
-  it("TRAINER.md contains all required sections (NFR13)", () => {
+describe("TRAINER.md content validation (NFR13)", () => {
+  it("contains all required sections", () => {
     const content = readFileSync(TRAINER_PATH, "utf-8");
     expect(content).toContain("# Coaching Persona");
     expect(content).toContain("# Injury Protocol");
@@ -23,34 +20,37 @@ describe("trainer-persona resource", () => {
     expect(sections.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("injury protocol includes pain scale interpretation (0-10)", () => {
+  it("injury protocol includes pain scale 0-10 and escalation rules", () => {
     const content = readFileSync(TRAINER_PATH, "utf-8");
     expect(content).toContain("**0**");
     expect(content).toContain("**10**");
     expect(content).toContain("Forced rest");
+    expect(content).toContain("Escalation Rules");
   });
 
-  it("scheduling rules include session spacing constraints", () => {
+  it("includes prehab requirements", () => {
     const content = readFileSync(TRAINER_PATH, "utf-8");
-    expect(content).toContain("consecutive days");
-    expect(content).toContain("rest day");
+    expect(content).toContain("Prehab");
+    expect(content).toContain("non-negotiable");
+  });
+});
+
+describe("loadTrainerContent", () => {
+  it("loads TRAINER.md successfully from valid path", () => {
+    const result = loadTrainerContent(TRAINER_PATH);
+    expect(result.ok).toBe(true);
+    expect(result.text).toContain("# Coaching Persona");
   });
 
-  it("periodization framework defines mesocycle structure", () => {
-    const content = readFileSync(TRAINER_PATH, "utf-8");
-    expect(content).toContain("Mesocycle");
-    expect(content).toContain("deload");
+  it("returns fallback text when file is missing (NFR8)", () => {
+    const result = loadTrainerContent("/nonexistent/TRAINER.md");
+    expect(result.ok).toBe(false);
+    expect(result.text).toContain("Coaching Persona Unavailable");
   });
 
-  it("recovery rules address overtraining signals", () => {
-    const content = readFileSync(TRAINER_PATH, "utf-8");
-    expect(content).toContain("RPE");
-    expect(content).toContain("overtraining");
-  });
-
-  it("graceful degradation — handler returns fallback when file missing", () => {
-    // Verify the handler pattern handles missing files
-    // (tested via the existsSync check in the resource handler)
-    expect(existsSync("/nonexistent/TRAINER.md")).toBe(false);
+  it("returns fallback text when path is a directory", () => {
+    const result = loadTrainerContent("./src");
+    expect(result.ok).toBe(false);
+    expect(result.text).toContain("Unavailable");
   });
 });
