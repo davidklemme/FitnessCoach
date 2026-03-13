@@ -2,6 +2,10 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  getExerciseLibrarySchema,
+  getExerciseLibrary,
+} from "./tools/get-exercise-library.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -20,3 +24,10 @@ export const server = new McpServer({
   name: "fitness-coach",
   version: getVersion(),
 });
+
+server.tool(
+  "get_exercise_library",
+  "Browse and search the exercise library. Filter by location type, equipment, joint stress rating, or muscle group. Returns exercises with full metadata including progression ladders.",
+  getExerciseLibrarySchema,
+  async (params) => getExerciseLibrary(params)
+);
