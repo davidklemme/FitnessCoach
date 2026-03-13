@@ -6,6 +6,7 @@ import {
   getExerciseLibrarySchema,
   getExerciseLibrary,
 } from "./tools/get-exercise-library.js";
+import { registerTrainerPersona } from "./resources/trainer-persona.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -24,6 +25,8 @@ export const server = new McpServer({
   name: "fitness-coach",
   version: getVersion(),
 });
+
+registerTrainerPersona(server);
 
 server.tool(
   "get_exercise_library",
