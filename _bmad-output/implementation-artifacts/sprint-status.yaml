@@ -43,8 +43,8 @@ development_status:
   epic-1: in-progress
   1-1-project-scaffold-mcp-server-bootstrap: done
   1-2-database-connection-migration-infrastructure: review
-  1-3-exercise-library-with-browse-search: backlog
-  1-4-coaching-persona-resource: backlog
+  1-3-exercise-library-with-browse-search: review
+  1-4-coaching-persona-resource: review
   1-5-structured-logging-system-status: backlog
   epic-1-retrospective: optional
 
