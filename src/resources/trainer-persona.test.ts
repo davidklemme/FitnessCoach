@@ -8,6 +8,7 @@ describe("TRAINER.md content validation (NFR13)", () => {
   it("contains all required sections", () => {
     const content = readFileSync(TRAINER_PATH, "utf-8");
     expect(content).toContain("# Coaching Persona");
+    expect(content).toContain("# Safety Guardrails");
     expect(content).toContain("# Injury Protocol");
     expect(content).toContain("# Scheduling Rules");
     expect(content).toContain("# Periodization Framework");
@@ -17,7 +18,7 @@ describe("TRAINER.md content validation (NFR13)", () => {
   it("sections are separated by horizontal rules for independent updates", () => {
     const content = readFileSync(TRAINER_PATH, "utf-8");
     const sections = content.split("---").filter((s) => s.trim().length > 0);
-    expect(sections.length).toBeGreaterThanOrEqual(5);
+    expect(sections.length).toBeGreaterThanOrEqual(6);
   });
 
   it("injury protocol includes pain scale 0-10 and escalation rules", () => {
