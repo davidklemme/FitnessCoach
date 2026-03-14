@@ -40,37 +40,37 @@ tracking_system: file-system
 story_location: _bmad-output/implementation-artifacts
 
 development_status:
-  epic-1: in-progress
-  1-1-project-scaffold-mcp-server-bootstrap: review
-  1-2-database-connection-migration-infrastructure: backlog
-  1-3-exercise-library-with-browse-search: backlog
-  1-4-coaching-persona-resource: backlog
-  1-5-structured-logging-system-status: backlog
+  epic-1: done
+  1-1-project-scaffold-mcp-server-bootstrap: done
+  1-2-database-connection-migration-infrastructure: done
+  1-3-exercise-library-with-browse-search: done
+  1-4-coaching-persona-resource: done
+  1-5-structured-logging-system-status: done
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-plan-schema-view-current-plan: backlog
-  2-2-update-training-plan: backlog
-  2-3-injury-responsive-plan-adjustment: backlog
+  epic-2: done
+  2-1-plan-schema-view-current-plan: done
+  2-2-update-training-plan: done
+  2-3-injury-responsive-plan-adjustment: done
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-log-completed-session: backlog
-  3-2-injury-status-ad-hoc-injury-logging: backlog
-  3-3-injury-protocol-data-health-observations: backlog
+  epic-3: done
+  3-1-log-completed-session: done
+  3-2-injury-status-ad-hoc-injury-logging: done
+  3-3-injury-protocol-data-health-observations: done
   epic-3-retrospective: optional
 
-  epic-4: backlog
-  4-1-progress-trends-benchmarks: backlog
-  4-2-bottleneck-identification-running-volume-rule: backlog
+  epic-4: done
+  4-1-progress-trends-benchmarks: done
+  4-2-bottleneck-identification-running-volume-rule: done
   epic-4-retrospective: optional
 
-  epic-5: backlog
-  5-1-scheduling-data-constraints: backlog
-  5-2-schedule-confirmation-event-management: backlog
+  epic-5: done
+  5-1-scheduling-data-constraints: done
+  5-2-schedule-confirmation-event-management: done
   epic-5-retrospective: optional
 
-  epic-6: backlog
-  6-1-check-in-composite-tool: backlog
-  6-2-coaching-intelligence-data: backlog
+  epic-6: done
+  6-1-check-in-composite-tool: done
+  6-2-coaching-intelligence-data: done
   epic-6-retrospective: optional

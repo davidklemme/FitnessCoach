@@ -1,0 +1,1 @@
+DROP INDEX `idx_health_observations_date`;

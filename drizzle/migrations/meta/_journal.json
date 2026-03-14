@@ -1,0 +1,97 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1773415492962,
+      "tag": "0000_nasty_wolverine",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1773415790402,
+      "tag": "0001_naive_colossus",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1773415790500,
+      "tag": "0002_seed_exercises",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1773433408029,
+      "tag": "0003_lucky_mantis",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1773433643292,
+      "tag": "0004_pink_stepford_cuckoos",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1773435525780,
+      "tag": "0005_flaky_sphinx",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1773436137313,
+      "tag": "0006_bent_champions",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1773437102645,
+      "tag": "0007_overjoyed_cobalt_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1773438369566,
+      "tag": "0008_luxuriant_steel_serpent",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1773438790670,
+      "tag": "0009_silly_wiccan",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1773438790700,
+      "tag": "0010_seed_benchmarks",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1773471007365,
+      "tag": "0011_magical_millenium_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1773471378061,
+      "tag": "0012_closed_red_wolf",
+      "breakpoints": true
+    }
+  ]
+}

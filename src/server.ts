@@ -1,7 +1,28 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  getExerciseLibrarySchema,
+  getExerciseLibrary,
+} from "./tools/get-exercise-library.js";
+import { registerTrainerPersona } from "./resources/trainer-persona.js";
+import { systemStatus } from "./tools/system-status.js";
+import { getCurrentPlan } from "./tools/get-current-plan.js";
+import {
+  updatePlan,
+  updatePlanSchema,
+} from "./tools/update-plan.js";
+import {
+  logSession,
+  logSessionSchema,
+} from "./tools/log-session.js";
+import {
+  getProgress,
+  getProgressSchema,
+} from "./tools/get-progress.js";
+import { checkIn } from "./tools/check-in.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -20,3 +41,108 @@ export const server = new McpServer({
   name: "fitness-coach",
   version: getVersion(),
 });
+
+registerTrainerPersona(server);
+
+server.tool(
+  "get_exercise_library",
+  "Browse and search the exercise library. Filter by location type, equipment, joint stress rating, or muscle group. Returns exercises with full metadata including progression ladders.",
+  getExerciseLibrarySchema,
+  async (params) => getExerciseLibrary(params)
+);
+
+server.tool(
+  "get_current_plan",
+  "View the current active training plan with mesocycle phase, week number, sessions with exercise details, scheduling context (estimated duration, location types, equipment needs), scheduling status, and user scheduling preferences.",
+  {},
+  async () => getCurrentPlan()
+);
+
+server.tool(
+  "update_plan",
+  "Create or modify the training plan. Actions: 'create' (new plan), 'swap_exercise', 'adjust_volume', 'deload', 'injury_adjust', 'schedule_confirm' (confirm sessions with calendar event IDs), 'schedule_cancel' (clear scheduling for a session), 'schedule_reject' (reject proposed schedule, no changes). Pass action and fields as a JSON object.",
+  { input: z.string().describe("JSON object with 'action' field and action-specific parameters. See tool description for available actions.") },
+  async (params) => {
+    let raw: unknown;
+    try {
+      raw = JSON.parse(params.input);
+    } catch {
+      return {
+        content: [{ type: "text" as const, text: "Invalid JSON input. Provide a valid JSON object with an 'action' field." }],
+        isError: true,
+      };
+    }
+    const parsed = updatePlanSchema.safeParse(raw);
+    if (!parsed.success) {
+      return {
+        content: [{ type: "text" as const, text: `Invalid input: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}` }],
+        isError: true,
+      };
+    }
+    return updatePlan(parsed.data);
+  }
+);
+
+server.tool(
+  "log_session",
+  "Log a completed workout session, ad-hoc injury, or health observations. For sessions: pass exercises array with sets/reps/RPE. For injuries: set ad_hoc_injury=true with injury object (pain_level 0-10, location, affected_areas). For health: pass health object (sleep_quality, energy_level, soreness_level 1-5). All can be combined. Upserts sessions on (date, session_type, session_order), health observations on date.",
+  { input: z.string().describe("JSON object with date, session_type, and exercises/injury/health data. See tool description for modes.") },
+  async (params) => {
+    let raw: unknown;
+    try {
+      raw = JSON.parse(params.input);
+    } catch {
+      return {
+        content: [{ type: "text" as const, text: "Invalid JSON input. Provide a valid JSON object with date, session_type, and exercises/injury/health data." }],
+        isError: true,
+      };
+    }
+    const parsed = logSessionSchema.safeParse(raw);
+    if (!parsed.success) {
+      return {
+        content: [{ type: "text" as const, text: `Invalid input: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}` }],
+        isError: true,
+      };
+    }
+    return logSession(parsed.data);
+  }
+);
+
+server.tool(
+  "get_progress",
+  "View progress trends, benchmark standings, bottleneck detection, and running volume analysis. Pass exercise_id or exercise_name for exercise-specific trends. Benchmarks always included with bottleneck detection (ranked by gap severity). Running volume calculated weekly with week-over-week increase percentages. Optional weeks parameter (default 8).",
+  { input: z.string().describe("JSON object with optional exercise_id, exercise_name, and weeks fields.") },
+  async (params) => {
+    let raw: unknown;
+    try {
+      raw = JSON.parse(params.input);
+    } catch {
+      return {
+        content: [{ type: "text" as const, text: "Invalid JSON input. Provide a valid JSON object." }],
+        isError: true,
+      };
+    }
+    const parsed = getProgressSchema.safeParse(raw);
+    if (!parsed.success) {
+      return {
+        content: [{ type: "text" as const, text: `Invalid input: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}` }],
+        isError: true,
+      };
+    }
+    return getProgress(parsed.data);
+  }
+);
+
+server.tool(
+  "check_in",
+  "Structured check-in for coaching conversations. Returns injury status (first), recent health observations, last session summary, upcoming plan preview, skipped sessions, and training load. Sections are omitted when no data exists.",
+  {},
+  async () => checkIn()
+);
+
+server.tool(
+  "system_status",
+  "Check MCP server operational health. Returns DB file size, server uptime, recent error count, and last log entry.",
+  {},
+  async () => systemStatus()
+);

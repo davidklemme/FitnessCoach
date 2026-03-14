@@ -1,6 +1,6 @@
 # Story 1.1: Project Scaffold & MCP Server Bootstrap
 
-Status: review
+Status: done
 
 ## Story
 
