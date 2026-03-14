@@ -60,14 +60,14 @@ development_status:
   3-3-injury-protocol-data-health-observations: done
   epic-3-retrospective: optional
 
-  epic-4: in-progress
-  4-1-progress-trends-benchmarks: review
-  4-2-bottleneck-identification-running-volume-rule: review
+  epic-4: done
+  4-1-progress-trends-benchmarks: done
+  4-2-bottleneck-identification-running-volume-rule: done
   epic-4-retrospective: optional
 
-  epic-5: backlog
-  5-1-scheduling-data-constraints: backlog
-  5-2-schedule-confirmation-event-management: backlog
+  epic-5: in-progress
+  5-1-scheduling-data-constraints: review
+  5-2-schedule-confirmation-event-management: review
   epic-5-retrospective: optional
 
   epic-6: backlog

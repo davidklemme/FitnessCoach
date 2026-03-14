@@ -46,6 +46,9 @@ export const planSessions = sqliteTable(
       .references(() => plans.id),
     sessionType: text("session_type").notNull(),
     dayOfWeek: text("day_of_week").notNull(),
+    scheduledStatus: text("scheduled_status"),
+    calendarEventId: text("calendar_event_id"),
+    scheduledDatetime: text("scheduled_datetime"),
   },
   (table) => [index("idx_plan_sessions_plan_id").on(table.planId)]
 );
@@ -148,6 +151,15 @@ export const healthObservations = sqliteTable("health_observations", {
   sorenessLevel: integer("soreness_level"),
   notes: text("notes"),
   createdAt: text("created_at").notNull(),
+});
+
+export const schedulingPreferences = sqliteTable("scheduling_preferences", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  earliestTime: text("earliest_time").notNull().default("06:00"),
+  latestTime: text("latest_time").notNull().default("20:00"),
+  meetingBufferMinutes: integer("meeting_buffer_minutes").notNull().default(60),
+  blackoutPatternsJson: text("blackout_patterns_json"),
+  updatedAt: text("updated_at").notNull(),
 });
 
 export const benchmarks = sqliteTable("benchmarks", {

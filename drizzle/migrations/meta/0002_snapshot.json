@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "987cd317-1692-4290-abf1-c9197a12af0d",
-  "prevId": "699dcfba-872f-428e-8366-e91faae7b985",
+  "id": "a1b2c3d4-5678-90ab-cdef-111111111111",
+  "prevId": "987cd317-1692-4290-abf1-c9197a12af0d",
   "tables": {
     "exercises": {
       "name": "exercises",

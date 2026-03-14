@@ -78,6 +78,20 @@
       "when": 1773438790700,
       "tag": "0010_seed_benchmarks",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1773471007365,
+      "tag": "0011_magical_millenium_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1773471378061,
+      "tag": "0012_closed_red_wolf",
+      "breakpoints": true
     }
   ]
 }

@@ -52,14 +52,14 @@ server.tool(
 
 server.tool(
   "get_current_plan",
-  "View the current active training plan with mesocycle phase, week number, and all scheduled sessions with exercise details.",
+  "View the current active training plan with mesocycle phase, week number, sessions with exercise details, scheduling context (estimated duration, location types, equipment needs), scheduling status, and user scheduling preferences.",
   {},
   async () => getCurrentPlan()
 );
 
 server.tool(
   "update_plan",
-  "Create or modify the training plan. Actions: 'create' (new plan with sessions/exercises), 'swap_exercise' (replace an exercise), 'adjust_volume' (change sets/reps), 'deload' (reduce volume ~50%), 'injury_adjust' (substitute exercises for affected muscle groups, or restore originals with pain_level 0). Pass action and action-specific fields as a JSON object.",
+  "Create or modify the training plan. Actions: 'create' (new plan), 'swap_exercise', 'adjust_volume', 'deload', 'injury_adjust', 'schedule_confirm' (confirm sessions with calendar event IDs), 'schedule_cancel' (clear scheduling for a session), 'schedule_reject' (reject proposed schedule, no changes). Pass action and fields as a JSON object.",
   { input: z.string().describe("JSON object with 'action' field and action-specific parameters. See tool description for available actions.") },
   async (params) => {
     let raw: unknown;
