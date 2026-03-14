@@ -1,6 +1,6 @@
 # Story 6.2: Coaching Intelligence Data
 
-Status: review
+Status: done
 
 ## Story
 

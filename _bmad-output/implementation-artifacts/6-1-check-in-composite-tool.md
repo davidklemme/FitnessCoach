@@ -1,6 +1,6 @@
 # Story 6.1: Check-in Composite Tool
 
-Status: review
+Status: done
 
 ## Story
 
