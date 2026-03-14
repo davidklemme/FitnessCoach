@@ -109,7 +109,7 @@ server.tool(
 
 server.tool(
   "get_progress",
-  "View progress trends for a specific exercise and/or current benchmark standings. Pass exercise_id or exercise_name for exercise-specific volume/performance trends. Benchmarks (pull-ups, push-ups, squats, running) are always included. Optional weeks parameter controls history depth (default 8).",
+  "View progress trends, benchmark standings, bottleneck detection, and running volume analysis. Pass exercise_id or exercise_name for exercise-specific trends. Benchmarks always included with bottleneck detection (ranked by gap severity). Running volume calculated weekly with week-over-week increase percentages. Optional weeks parameter (default 8).",
   { input: z.string().describe("JSON object with optional exercise_id, exercise_name, and weeks fields.") },
   async (params) => {
     let raw: unknown;

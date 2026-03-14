@@ -7,14 +7,21 @@ import {
   exercises,
   benchmarks,
 } from "../db/schema.js";
-import { eq, desc, and, gte, like } from "drizzle-orm";
+import { eq, and, gte, like } from "drizzle-orm";
 import { log } from "../lib/logger.js";
 
 function parseTimeToSeconds(time: string): number {
   const parts = time.split(":").map(Number);
-  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  if (parts.length === 2) return parts[0] * 60 + parts[1];
-  return parseFloat(time);
+  if (parts.length === 3) {
+    const val = parts[0] * 3600 + parts[1] * 60 + parts[2];
+    return Number.isNaN(val) ? 0 : val;
+  }
+  if (parts.length === 2) {
+    const val = parts[0] * 60 + parts[1];
+    return Number.isNaN(val) ? 0 : val;
+  }
+  const val = parseFloat(time);
+  return Number.isNaN(val) ? 0 : val;
 }
 
 interface RunningWeekRow {
@@ -266,12 +273,7 @@ export async function getProgress(
         return week;
       });
 
-      response.runningVolume = {
-        weeks,
-        flagged: weeks.some(
-          (w) => (w as Record<string, unknown>).exceedsRule === true
-        ),
-      };
+      response.runningVolume = { weeks };
     } else {
       response.runningVolume = {
         message:

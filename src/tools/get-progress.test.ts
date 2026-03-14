@@ -373,7 +373,6 @@ describe("get_progress — running volume analysis", () => {
 
     expect(data.runningVolume.weeks[1].exceedsRule).toBe(true);
     expect(data.runningVolume.weeks[1].increasePercent).toBe(20);
-    expect(data.runningVolume.flagged).toBe(true);
   });
 
   it("returns actionable message when no running data exists", async () => {
@@ -396,7 +395,6 @@ describe("get_progress — running volume analysis", () => {
     expect(data.runningVolume.weeks).toHaveLength(1);
     expect(data.runningVolume.weeks[0].increasePercent).toBeUndefined();
     expect(data.runningVolume.weeks[0].exceedsRule).toBeUndefined();
-    expect(data.runningVolume.flagged).toBe(false);
   });
 });
 
