@@ -5,6 +5,7 @@ import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { unlinkSync, existsSync } from "node:fs";
 import * as schema from "../db/schema.js";
 import { getCurrentPlan } from "./get-current-plan.js";
+import { updatePlan } from "./update-plan.js";
 
 const TEST_DB = "./test-get-current-plan.db";
 let sqlite: InstanceType<typeof Database>;
@@ -349,19 +350,19 @@ describe("get_current_plan", () => {
     const result = await getCurrentPlan(testDb);
     const plan = parseResult(result);
 
-    // Push session: Push-Up (5min, anywhere, none) → 10min warmup + 5min + 5min transition = 20min
+    // Push session: Push-Up (5min, anywhere, none) → 10min warmup + 5min exercise = 15min (no transition for single exercise)
     const pushSession = plan.sessions.find(
       (s: { sessionType: string }) => s.sessionType === "push"
     );
-    expect(pushSession.estimatedDuration).toBe(20);
+    expect(pushSession.estimatedDuration).toBe(15);
     expect(pushSession.locationTypes).toContain("anywhere");
     expect(pushSession.equipmentNeeded).toHaveLength(0); // "none" is filtered out
 
-    // Legs session: Barbell Squat (15min, gym, barbell+squat rack) → 10 + 15 + 5 = 30min
+    // Legs session: Barbell Squat (15min, gym, barbell+squat rack) → 10 + 15 = 25min (single exercise, no transition)
     const legsSession = plan.sessions.find(
       (s: { sessionType: string }) => s.sessionType === "legs"
     );
-    expect(legsSession.estimatedDuration).toBe(30);
+    expect(legsSession.estimatedDuration).toBe(25);
     expect(legsSession.locationTypes).toContain("gym");
     expect(legsSession.equipmentNeeded).toContain("barbell");
     expect(legsSession.equipmentNeeded).toContain("squat rack");
@@ -391,5 +392,39 @@ describe("get_current_plan", () => {
     const result = await getCurrentPlan(testDb);
     const plan = parseResult(result);
     expect("schedulingPreferences" in plan).toBe(false);
+  });
+
+  it("includes scheduling fields after schedule_confirm", async () => {
+    seedActivePlan();
+    await updatePlan({
+      action: "schedule_confirm",
+      confirmations: [
+        { plan_session_id: 1, datetime: "2026-03-15T10:00:00Z", calendar_event_id: "gcal_test123" },
+      ],
+    }, testDb, sqlite);
+
+    const result = await getCurrentPlan(testDb);
+    const plan = parseResult(result);
+    const pushSession = plan.sessions.find(
+      (s: { sessionType: string }) => s.sessionType === "push"
+    );
+    expect(pushSession.scheduledStatus).toBe("confirmed");
+    expect(pushSession.calendarEventId).toBe("gcal_test123");
+    expect(pushSession.scheduledDatetime).toBe("2026-03-15T10:00:00Z");
+  });
+
+  it("returns estimatedDuration 0 for session with no exercises", async () => {
+    testDb.insert(schema.plans).values({
+      id: 30, mesocycleName: "Empty Sessions", phase: "base",
+      weekNumber: 1, status: "active", startDate: "2026-03-01",
+      createdAt: "2026-03-01T00:00:00.000Z",
+    }).run();
+    testDb.insert(schema.planSessions).values({
+      id: 30, planId: 30, sessionType: "rest", dayOfWeek: "sunday",
+    }).run();
+
+    const result = await getCurrentPlan(testDb);
+    const plan = parseResult(result);
+    expect(plan.sessions[0].estimatedDuration).toBe(0);
   });
 });

@@ -141,7 +141,9 @@ export async function getCurrentPlan(database: typeof defaultDb = defaultDb) {
 
         // Accumulate scheduling context from exercise metadata
         if (row.exerciseMinDuration) {
-          sess.estimatedDuration += row.exerciseMinDuration + TRANSITION_MINUTES;
+          // Transition time only between exercises (N-1 transitions for N exercises)
+          const transition = sess.exercises.length > 1 ? TRANSITION_MINUTES : 0;
+          sess.estimatedDuration += row.exerciseMinDuration + transition;
         }
         if (row.exerciseLocationType) {
           sess.locationTypes.add(row.exerciseLocationType);
@@ -165,7 +167,7 @@ export async function getCurrentPlan(database: typeof defaultDb = defaultDb) {
         id: s.id,
         sessionType: s.sessionType,
         dayOfWeek: s.dayOfWeek,
-        estimatedDuration: s.estimatedDuration,
+        estimatedDuration: s.exercises.length > 0 ? s.estimatedDuration : 0,
         locationTypes: Array.from(s.locationTypes),
         equipmentNeeded: Array.from(s.equipmentNeeded),
         exercises: s.exercises,

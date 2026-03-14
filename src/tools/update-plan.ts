@@ -108,7 +108,7 @@ export async function updatePlan(
       case "schedule_confirm":
         return handleScheduleConfirm(params, database, sqliteConn);
       case "schedule_cancel":
-        return handleScheduleCancel(params, database);
+        return handleScheduleCancel(params, database, sqliteConn);
       case "schedule_reject":
         return {
           content: [
@@ -800,12 +800,12 @@ function handleScheduleConfirm(
       return { error: "no_active_plan" as const };
     }
 
-    const confirmed: { planSessionId: number; datetime: string; calendarEventId: string }[] = [];
+    const confirmed: { planSessionId: number; datetime: string; calendarEventId: string; replacedCalendarEventId?: string }[] = [];
     const failed: { planSessionId: number; reason: string }[] = [];
 
     for (const conf of params.confirmations) {
       const session = database
-        .select({ id: planSessions.id })
+        .select({ id: planSessions.id, calendarEventId: planSessions.calendarEventId })
         .from(planSessions)
         .where(
           and(
@@ -830,11 +830,16 @@ function handleScheduleConfirm(
         .where(eq(planSessions.id, conf.plan_session_id))
         .run();
 
-      confirmed.push({
+      const entry: Record<string, unknown> = {
         planSessionId: conf.plan_session_id,
         datetime: conf.datetime,
         calendarEventId: conf.calendar_event_id,
-      });
+      };
+      // Return replaced event ID so Claude can clean up the orphaned calendar event
+      if (session.calendarEventId && session.calendarEventId !== conf.calendar_event_id) {
+        entry.replacedCalendarEventId = session.calendarEventId;
+      }
+      confirmed.push(entry as typeof confirmed[number]);
     }
 
     return { planId: activePlan.id, confirmed, failed };
@@ -874,47 +879,76 @@ function handleScheduleConfirm(
 
 function handleScheduleCancel(
   params: z.infer<typeof scheduleCancelSchema>,
-  database: typeof defaultDb
+  database: typeof defaultDb,
+  sqliteConn: typeof defaultSqlite
 ) {
-  const session = database
-    .select({ id: planSessions.id, planId: planSessions.planId })
-    .from(planSessions)
-    .innerJoin(plans, eq(plans.id, planSessions.planId))
-    .where(
-      and(
-        eq(planSessions.id, params.plan_session_id),
-        eq(plans.status, "active")
+  const result = sqliteConn.transaction(() => {
+    const session = database
+      .select({
+        id: planSessions.id,
+        scheduledStatus: planSessions.scheduledStatus,
+        calendarEventId: planSessions.calendarEventId,
+      })
+      .from(planSessions)
+      .innerJoin(plans, eq(plans.id, planSessions.planId))
+      .where(
+        and(
+          eq(planSessions.id, params.plan_session_id),
+          eq(plans.status, "active")
+        )
       )
-    )
-    .get();
+      .get();
 
-  if (!session) {
+    if (!session) {
+      return { error: "not_found" as const };
+    }
+
+    if (!session.scheduledStatus) {
+      return { error: "not_scheduled" as const };
+    }
+
+    const oldEventId = session.calendarEventId;
+
+    database
+      .update(planSessions)
+      .set({
+        scheduledStatus: null,
+        scheduledDatetime: null,
+        calendarEventId: null,
+      })
+      .where(eq(planSessions.id, params.plan_session_id))
+      .run();
+
+    return { oldEventId };
+  })();
+
+  if ("error" in result) {
+    if (result.error === "not_found") {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Session ${params.plan_session_id} not found in active plan.`,
+          },
+        ],
+        isError: true,
+      };
+    }
     return {
       content: [
         {
           type: "text" as const,
-          text: `Session ${params.plan_session_id} not found in active plan.`,
+          text: JSON.stringify({
+            scheduleCancel: {
+              planSessionId: params.plan_session_id,
+              cleared: false,
+              message: "Session is not currently scheduled.",
+            },
+          }),
         },
       ],
-      isError: true,
     };
   }
-
-  const oldEvent = database
-    .select({ calendarEventId: planSessions.calendarEventId })
-    .from(planSessions)
-    .where(eq(planSessions.id, params.plan_session_id))
-    .get();
-
-  database
-    .update(planSessions)
-    .set({
-      scheduledStatus: null,
-      scheduledDatetime: null,
-      calendarEventId: null,
-    })
-    .where(eq(planSessions.id, params.plan_session_id))
-    .run();
 
   const response: Record<string, unknown> = {
     scheduleCancel: {
@@ -922,8 +956,8 @@ function handleScheduleCancel(
       cleared: true,
     },
   };
-  if (oldEvent?.calendarEventId) {
-    (response.scheduleCancel as Record<string, unknown>).orphanedCalendarEventId = oldEvent.calendarEventId;
+  if (result.oldEventId) {
+    (response.scheduleCancel as Record<string, unknown>).orphanedCalendarEventId = result.oldEventId;
   }
 
   return {
