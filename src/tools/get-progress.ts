@@ -10,6 +10,19 @@ import {
 import { eq, desc, and, gte, like } from "drizzle-orm";
 import { log } from "../lib/logger.js";
 
+function parseTimeToSeconds(time: string): number {
+  const parts = time.split(":").map(Number);
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  return parseFloat(time);
+}
+
+interface RunningWeekRow {
+  week_label: string;
+  week_start: string;
+  total_distance: number;
+}
+
 export const getProgressSchema = z.object({
   exercise_id: z
     .number()
@@ -177,6 +190,93 @@ export async function getProgress(
           }
           return component;
         }),
+      };
+    }
+
+    // --- Bottleneck detection (FR28) ---
+    if (allBenchmarks.length > 0) {
+      const withValues = allBenchmarks.filter((b) => b.currentValue !== null);
+      if (withValues.length > 0) {
+        const bottlenecks = withValues
+          .map((b) => {
+            let percentComplete: number;
+            if (b.unit === "time") {
+              const targetSec = parseTimeToSeconds(b.targetValue);
+              const currentSec = parseTimeToSeconds(b.currentValue!);
+              percentComplete =
+                currentSec > 0 ? (targetSec / currentSec) * 100 : 0;
+            } else {
+              const target = parseFloat(b.targetValue);
+              const current = parseFloat(b.currentValue!);
+              percentComplete = target > 0 ? (current / target) * 100 : 0;
+            }
+            return {
+              goalComponent: b.goalComponent,
+              targetValue: b.targetValue,
+              currentValue: b.currentValue!,
+              unit: b.unit,
+              percentComplete: Math.round(percentComplete),
+            };
+          })
+          .filter((b) => b.percentComplete < 100)
+          .sort((a, b) => a.percentComplete - b.percentComplete);
+
+        if (bottlenecks.length > 0) {
+          response.bottlenecks = bottlenecks;
+        }
+      }
+    }
+
+    // --- Running volume analysis (FR29) ---
+    const runningWeeks = sqliteConn
+      .prepare(
+        `SELECT
+          strftime('%Y-W%W', sl.date) AS week_label,
+          MIN(sl.date) AS week_start,
+          SUM(CAST(sle.weight AS REAL)) AS total_distance
+        FROM session_log_entries sle
+        JOIN session_logs sl ON sle.session_log_id = sl.id
+        JOIN exercises e ON sle.exercise_id = e.id
+        WHERE LOWER(e.name) LIKE '%run%'
+          AND sl.date >= ?
+          AND sle.weight IS NOT NULL
+        GROUP BY strftime('%Y-W%W', sl.date)
+        ORDER BY week_label ASC`
+      )
+      .all(cutoffStr) as RunningWeekRow[];
+
+    if (runningWeeks.length > 0) {
+      const weeks = runningWeeks.map((w, i) => {
+        const week: Record<string, unknown> = {
+          week: w.week_label,
+          weekStart: w.week_start,
+          totalDistance: w.total_distance,
+        };
+        if (i > 0) {
+          const prev = runningWeeks[i - 1].total_distance;
+          if (prev > 0) {
+            const pct =
+              Math.round(
+                ((w.total_distance - prev) / prev) * 1000
+              ) / 10;
+            week.increasePercent = pct;
+            week.exceedsRule = pct > 10;
+          }
+        }
+        return week;
+      });
+
+      response.runningVolume = {
+        weeks,
+        flagged: weeks.some(
+          (w) => (w as Record<string, unknown>).exceedsRule === true
+        ),
+      };
+    } else {
+      response.runningVolume = {
+        message:
+          "No running data found. Log running sessions with distance in the weight field to track volume.",
+        weeks: [],
       };
     }
 

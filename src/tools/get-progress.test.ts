@@ -65,6 +65,15 @@ beforeAll(() => {
         jointStressRating: 6,
         muscleGroups: JSON.stringify(["quads", "glutes"]),
       },
+      {
+        id: 4,
+        name: "Easy Run",
+        locationType: "outdoor",
+        equipmentRequired: JSON.stringify(["running shoes"]),
+        minDuration: 20,
+        jointStressRating: 4,
+        muscleGroups: JSON.stringify(["quads", "hamstrings", "calves", "cardio"]),
+      },
     ])
     .run();
 });
@@ -257,6 +266,137 @@ describe("get_progress — benchmark update via log_session", () => {
     const data = parseResult(result);
 
     expect("benchmarkUpdated" in data).toBe(false);
+  });
+});
+
+describe("get_progress — bottleneck detection", () => {
+  it("flags benchmarks where current is behind target, ranked by gap severity", async () => {
+    // Set current values: pull_ups 10/20 (50%), push_ups 40/50 (80%), squats 60/100 (60%)
+    testDb.update(schema.benchmarks).set({ currentValue: "10" }).where(eq(schema.benchmarks.goalComponent, "pull_ups")).run();
+    testDb.update(schema.benchmarks).set({ currentValue: "40" }).where(eq(schema.benchmarks.goalComponent, "push_ups")).run();
+    testDb.update(schema.benchmarks).set({ currentValue: "60" }).where(eq(schema.benchmarks.goalComponent, "squats")).run();
+
+    const result = await getProgress({ weeks: 8 }, testDb, sqlite);
+    const data = parseResult(result);
+
+    expect(data.bottlenecks).toHaveLength(3);
+    // Ranked by lowest % first: pull_ups (50%) → squats (60%) → push_ups (80%)
+    expect(data.bottlenecks[0].goalComponent).toBe("pull_ups");
+    expect(data.bottlenecks[0].percentComplete).toBe(50);
+    expect(data.bottlenecks[1].goalComponent).toBe("squats");
+    expect(data.bottlenecks[1].percentComplete).toBe(60);
+    expect(data.bottlenecks[2].goalComponent).toBe("push_ups");
+    expect(data.bottlenecks[2].percentComplete).toBe(80);
+  });
+
+  it("handles time-based benchmarks (running_5k — lower is better)", async () => {
+    // Target 25:00 (1500s), current 30:00 (1800s) → 1500/1800 = 83%
+    testDb.update(schema.benchmarks).set({ currentValue: "30:00" }).where(eq(schema.benchmarks.goalComponent, "running_5k")).run();
+
+    const result = await getProgress({ weeks: 8 }, testDb, sqlite);
+    const data = parseResult(result);
+
+    const running = data.bottlenecks.find(
+      (b: Record<string, unknown>) => b.goalComponent === "running_5k"
+    );
+    expect(running).toBeDefined();
+    expect(running.percentComplete).toBe(83);
+  });
+
+  it("does not flag benchmarks that meet or exceed target", async () => {
+    testDb.update(schema.benchmarks).set({ currentValue: "25" }).where(eq(schema.benchmarks.goalComponent, "pull_ups")).run();
+    testDb.update(schema.benchmarks).set({ currentValue: "50" }).where(eq(schema.benchmarks.goalComponent, "push_ups")).run();
+    testDb.update(schema.benchmarks).set({ currentValue: "100" }).where(eq(schema.benchmarks.goalComponent, "squats")).run();
+    testDb.update(schema.benchmarks).set({ currentValue: "24:00" }).where(eq(schema.benchmarks.goalComponent, "running_5k")).run();
+
+    const result = await getProgress({ weeks: 8 }, testDb, sqlite);
+    const data = parseResult(result);
+
+    expect(data.bottlenecks).toBeUndefined();
+  });
+
+  it("omits bottlenecks section when no benchmarks have current values", async () => {
+    const result = await getProgress({ weeks: 8 }, testDb, sqlite);
+    const data = parseResult(result);
+
+    expect(data.bottlenecks).toBeUndefined();
+  });
+});
+
+describe("get_progress — running volume analysis", () => {
+  it("calculates weekly volume and week-over-week increase", async () => {
+    // Week 1: 2 runs × 5km = 10km
+    await logSession({
+      date: "2026-03-03", session_type: "run", session_order: 1,
+      exercises: [{ exercise_id: 4, sets: 1, reps: "1", weight: "5" }],
+    }, testDb, sqlite);
+    await logSession({
+      date: "2026-03-05", session_type: "run", session_order: 1,
+      exercises: [{ exercise_id: 4, sets: 1, reps: "1", weight: "5" }],
+    }, testDb, sqlite);
+
+    // Week 2: 2 runs × 5.5km = 11km (10% increase)
+    await logSession({
+      date: "2026-03-10", session_type: "run", session_order: 1,
+      exercises: [{ exercise_id: 4, sets: 1, reps: "1", weight: "5.5" }],
+    }, testDb, sqlite);
+    await logSession({
+      date: "2026-03-12", session_type: "run", session_order: 1,
+      exercises: [{ exercise_id: 4, sets: 1, reps: "1", weight: "5.5" }],
+    }, testDb, sqlite);
+
+    const result = await getProgress({ weeks: 8 }, testDb, sqlite);
+    const data = parseResult(result);
+
+    expect(data.runningVolume.weeks).toHaveLength(2);
+    expect(data.runningVolume.weeks[0].totalDistance).toBe(10);
+    expect(data.runningVolume.weeks[1].totalDistance).toBe(11);
+    expect(data.runningVolume.weeks[1].increasePercent).toBe(10);
+    expect(data.runningVolume.weeks[1].exceedsRule).toBe(false);
+  });
+
+  it("flags weeks exceeding 10% increase", async () => {
+    // Week 1: 10km
+    await logSession({
+      date: "2026-03-03", session_type: "run", session_order: 1,
+      exercises: [{ exercise_id: 4, sets: 1, reps: "1", weight: "10" }],
+    }, testDb, sqlite);
+
+    // Week 2: 12km (20% increase — flagged)
+    await logSession({
+      date: "2026-03-10", session_type: "run", session_order: 1,
+      exercises: [{ exercise_id: 4, sets: 1, reps: "1", weight: "12" }],
+    }, testDb, sqlite);
+
+    const result = await getProgress({ weeks: 8 }, testDb, sqlite);
+    const data = parseResult(result);
+
+    expect(data.runningVolume.weeks[1].exceedsRule).toBe(true);
+    expect(data.runningVolume.weeks[1].increasePercent).toBe(20);
+    expect(data.runningVolume.flagged).toBe(true);
+  });
+
+  it("returns actionable message when no running data exists", async () => {
+    const result = await getProgress({ weeks: 8 }, testDb, sqlite);
+    const data = parseResult(result);
+
+    expect(data.runningVolume.message).toContain("No running data found");
+    expect(data.runningVolume.weeks).toHaveLength(0);
+  });
+
+  it("first week has no increase percentage", async () => {
+    await logSession({
+      date: "2026-03-10", session_type: "run", session_order: 1,
+      exercises: [{ exercise_id: 4, sets: 1, reps: "1", weight: "5" }],
+    }, testDb, sqlite);
+
+    const result = await getProgress({ weeks: 8 }, testDb, sqlite);
+    const data = parseResult(result);
+
+    expect(data.runningVolume.weeks).toHaveLength(1);
+    expect(data.runningVolume.weeks[0].increasePercent).toBeUndefined();
+    expect(data.runningVolume.weeks[0].exceedsRule).toBeUndefined();
+    expect(data.runningVolume.flagged).toBe(false);
   });
 });
 

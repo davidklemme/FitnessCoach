@@ -61,8 +61,8 @@ development_status:
   epic-3-retrospective: optional
 
   epic-4: in-progress
-  4-1-progress-trends-benchmarks: in-progress
-  4-2-bottleneck-identification-running-volume-rule: backlog
+  4-1-progress-trends-benchmarks: review
+  4-2-bottleneck-identification-running-volume-rule: review
   epic-4-retrospective: optional
 
   epic-5: backlog

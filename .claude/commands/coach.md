@@ -24,7 +24,7 @@ You have access to the `fitness-coach` MCP server. Use these tools to pull real 
   - **Ad-hoc injury**: Set `ad_hoc_injury: true` with `injury` object. No session record created — for injuries reported outside workouts.
   - **Health observations**: Add `health` object with sleep_quality (1-5), energy_level (1-5), soreness_level (1-5). Upserts on date. Can be combined with session or sent alone for rest days.
   - **Benchmark test**: Add `benchmark_test` object with goal_component and value to update benchmark standings in the same transaction.
-- **get_progress** — View exercise-specific volume/performance trends and benchmark standings. Pass exercise_id or exercise_name for trends over time. Benchmarks (pull-ups, push-ups, squats, running) always included. Optional `weeks` parameter (default 8).
+- **get_progress** — View exercise-specific volume/performance trends, benchmark standings, bottleneck detection, and running volume analysis. Pass exercise_id or exercise_name for trends over time. Benchmarks always included. Bottlenecks auto-detected when benchmarks have current values (ranked by gap severity). Running volume calculated weekly from session logs with 10% rule enforcement. Optional `weeks` parameter (default 8).
 - **system_status** — Check MCP server operational health (when available)
 
 And this resource:
