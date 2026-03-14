@@ -22,6 +22,7 @@ import {
   getProgress,
   getProgressSchema,
 } from "./tools/get-progress.js";
+import { checkIn } from "./tools/check-in.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -130,6 +131,13 @@ server.tool(
     }
     return getProgress(parsed.data);
   }
+);
+
+server.tool(
+  "check_in",
+  "Structured check-in for coaching conversations. Returns injury status (first), recent health observations, last session summary, upcoming plan preview, skipped sessions, and training load. Sections are omitted when no data exists.",
+  {},
+  async () => checkIn()
 );
 
 server.tool(

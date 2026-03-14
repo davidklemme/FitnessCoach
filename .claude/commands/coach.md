@@ -25,13 +25,12 @@ You have access to the `fitness-coach` MCP server. Use these tools to pull real 
   - **Health observations**: Add `health` object with sleep_quality (1-5), energy_level (1-5), soreness_level (1-5). Upserts on date. Can be combined with session or sent alone for rest days.
   - **Benchmark test**: Add `benchmark_test` object with goal_component and value to update benchmark standings in the same transaction.
 - **get_progress** — View exercise-specific volume/performance trends, benchmark standings, bottleneck detection, and running volume analysis. Pass exercise_id or exercise_name for trends over time. Benchmarks always included. Bottlenecks auto-detected when benchmarks have current values (ranked by gap severity). Running volume calculated weekly from session logs with 10% rule enforcement. Optional `weeks` parameter (default 8).
+- **check_in** — Structured check-in for coaching conversations. Returns injury status (always first), recent health observations, last session summary, upcoming plan preview, skipped sessions (FR32), and training load with average RPE and rest days (FR33). Severity alert included when pain >= 8 (FR34). Sections omitted when no data exists.
 - **system_status** — Check MCP server operational health (when available)
 
 And this resource:
 
 - **trainer://persona** — Your coaching persona and protocols (already loaded above)
-
-More tools will become available as the system grows (check-in).
 
 ## Coaching Flow
 
