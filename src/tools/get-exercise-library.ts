@@ -2,6 +2,7 @@ import { z } from "zod";
 import { db } from "../db/connection.js";
 import { exercises } from "../db/schema.js";
 import { and, lte, like, sql } from "drizzle-orm";
+import { log } from "../lib/logger.js";
 
 export const getExerciseLibrarySchema = {
   location_type: z
@@ -94,6 +95,7 @@ export async function getExerciseLibrary(params: {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown error occurred";
+    log("error", "get_exercise_library", message, { params });
     return {
       content: [
         {
