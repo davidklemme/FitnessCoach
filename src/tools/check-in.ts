@@ -30,12 +30,14 @@ export async function checkIn(database: typeof defaultDb = defaultDb) {
         return entry;
       });
 
-      // Severity alert (FR34)
-      const latest = injuries[0];
-      if (latest.painLevel >= SEVERITY_ALERT_THRESHOLD) {
+      // Severity alert (FR34) — check all recent injuries, alert on worst
+      const severe = injuries
+        .filter((inj) => inj.painLevel >= SEVERITY_ALERT_THRESHOLD)
+        .sort((a, b) => b.painLevel - a.painLevel)[0];
+      if (severe) {
         response.severityAlert = {
-          painLevel: latest.painLevel,
-          location: latest.location,
+          painLevel: severe.painLevel,
+          location: severe.location,
         };
       }
     }
@@ -121,7 +123,10 @@ export async function checkIn(database: typeof defaultDb = defaultDb) {
       for (let i = 0; i < 7; i++) {
         const d = new Date();
         d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split("T")[0];
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const dateStr = `${y}-${m}-${day}`;
         if (!sessionDates.has(dateStr)) restDays++;
       }
 

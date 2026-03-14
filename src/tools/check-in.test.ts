@@ -118,6 +118,41 @@ describe("check_in — injury status", () => {
     const data = parseResult(result);
     expect(data.severityAlert).toBeUndefined();
   });
+
+  it("severity alert fires at boundary pain level 8", async () => {
+    await logSession({
+      date: "2026-03-10", session_type: "push", session_order: 1,
+      ad_hoc_injury: true,
+      injury: { pain_level: 8, location: "lower back" },
+    }, testDb, sqlite);
+
+    const result = await checkIn(testDb);
+    const data = parseResult(result);
+    expect(data.severityAlert).toBeDefined();
+    expect(data.severityAlert.painLevel).toBe(8);
+    expect(data.severityAlert.location).toBe("lower back");
+  });
+
+  it("severity alert uses worst injury, not just most recent", async () => {
+    // Older high-pain injury
+    await logSession({
+      date: "2026-03-09", session_type: "push", session_order: 1,
+      ad_hoc_injury: true,
+      injury: { pain_level: 9, location: "right knee" },
+    }, testDb, sqlite);
+    // Newer low-pain injury
+    await logSession({
+      date: "2026-03-10", session_type: "pull", session_order: 1,
+      ad_hoc_injury: true,
+      injury: { pain_level: 3, location: "left wrist" },
+    }, testDb, sqlite);
+
+    const result = await checkIn(testDb);
+    const data = parseResult(result);
+    expect(data.severityAlert).toBeDefined();
+    expect(data.severityAlert.painLevel).toBe(9);
+    expect(data.severityAlert.location).toBe("right knee");
+  });
 });
 
 describe("check_in — health observations", () => {
@@ -195,6 +230,73 @@ describe("check_in — training load (FR33)", () => {
     expect(data.trainingLoad.totalSessions).toBe(2);
     expect(data.trainingLoad.averageRpe).toBe(7.5);
     expect(data.trainingLoad.restDays).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe("check_in — skipped sessions (FR32)", () => {
+  it("detects planned-but-unlogged sessions from past days", async () => {
+    // Find yesterday's day name
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const yesterdayDay = dayNames[yesterday.getDay()];
+    const y = yesterday.getFullYear();
+    const m = String(yesterday.getMonth() + 1).padStart(2, "0");
+    const d = String(yesterday.getDate()).padStart(2, "0");
+    const yesterdayStr = `${y}-${m}-${d}`;
+
+    // Create plan with a session on yesterday's day of week
+    await updatePlan({
+      action: "create",
+      mesocycle_name: "Skip Test",
+      phase: "base",
+      week_number: 1,
+      start_date: "2026-03-01",
+      sessions: [
+        { session_type: "push", day_of_week: yesterdayDay, exercises: [{ exercise_id: 1, sets: 3, reps: "10" }] },
+      ],
+    }, testDb, sqlite);
+
+    // Don't log any session — it should appear as skipped
+    const result = await checkIn(testDb);
+    const data = parseResult(result);
+    expect(data.skippedSessions).toBeDefined();
+    const yesterdaySkipped = data.skippedSessions.filter((s: { date: string }) => s.date === yesterdayStr);
+    expect(yesterdaySkipped.length).toBeGreaterThanOrEqual(1);
+    expect(yesterdaySkipped[0].sessionType).toBe("push");
+  });
+
+  it("does not flag today's sessions as skipped", async () => {
+    const today = new Date();
+    const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const todayDay = dayNames[today.getDay()];
+
+    // Find a day that is NOT any of the past 7 days except today
+    // Create plan with session only on today's day
+    await updatePlan({
+      action: "create",
+      mesocycle_name: "Today Test",
+      phase: "base",
+      week_number: 1,
+      start_date: "2026-03-01",
+      sessions: [
+        { session_type: "push", day_of_week: todayDay, exercises: [{ exercise_id: 1, sets: 3, reps: "10" }] },
+      ],
+    }, testDb, sqlite);
+
+    const result = await checkIn(testDb);
+    const data = parseResult(result);
+
+    const y = today.getFullYear();
+    const mo = String(today.getMonth() + 1).padStart(2, "0");
+    const d = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${y}-${mo}-${d}`;
+
+    // Today should not appear in skipped (it's still upcoming)
+    if (data.skippedSessions) {
+      const todaySkipped = data.skippedSessions.filter((s: { date: string }) => s.date === todayStr);
+      expect(todaySkipped).toHaveLength(0);
+    }
   });
 });
 

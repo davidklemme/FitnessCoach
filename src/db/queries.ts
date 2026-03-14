@@ -8,9 +8,16 @@ import {
   sessionLogEntries,
   injuryStatusLog,
   healthObservations,
-  benchmarks,
 } from "./schema.js";
-import { eq, desc, gte, and } from "drizzle-orm";
+import { eq, desc, gte } from "drizzle-orm";
+
+/** Format a Date as YYYY-MM-DD in local time (matches session date storage). */
+function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 /**
  * Get the most recent injury status log entries.
@@ -73,7 +80,7 @@ export function getLastSession(database: typeof defaultDb = defaultDb) {
       rpePerExercise: sessionLogEntries.rpePerExercise,
     })
     .from(sessionLogEntries)
-    .leftJoin(exercises, eq(exercises.id, sessionLogEntries.exerciseId))
+    .innerJoin(exercises, eq(exercises.id, sessionLogEntries.exerciseId))
     .where(eq(sessionLogEntries.sessionLogId, session.id))
     .all();
 
@@ -81,7 +88,7 @@ export function getLastSession(database: typeof defaultDb = defaultDb) {
 }
 
 /**
- * Get upcoming plan sessions (next 7 days from active plan).
+ * Get all sessions from the active plan.
  */
 export function getUpcomingPlanPreview(database: typeof defaultDb = defaultDb) {
   const activePlan = database
@@ -123,7 +130,7 @@ export function getSessionLogsInRange(
 ) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
-  const cutoffStr = cutoff.toISOString().split("T")[0];
+  const cutoffStr = toLocalDateStr(cutoff);
 
   return database
     .select()
@@ -142,7 +149,7 @@ export function getSkippedSessions(
 ) {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
-  const cutoffStr = cutoff.toISOString().split("T")[0];
+  const cutoffStr = toLocalDateStr(cutoff);
 
   const activePlan = database
     .select()
@@ -174,14 +181,15 @@ export function getSkippedSessions(
   // Build set of logged (date, session_type) tuples
   const loggedSet = new Set(logged.map((l) => `${l.date}|${l.sessionType}`));
 
-  // Check each day in the past N days against planned sessions
+  // Check each past day (excluding today — today's sessions are still upcoming)
   const skipped: { date: string; sessionType: string; dayOfWeek: string }[] = [];
   const dayNames = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+  const todayStr = toLocalDateStr(new Date());
 
-  for (let i = days; i >= 0; i--) {
+  for (let i = days; i >= 1; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = toLocalDateStr(d);
     const dayOfWeek = dayNames[d.getDay()];
 
     for (const p of planned) {
