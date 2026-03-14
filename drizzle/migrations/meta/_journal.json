@@ -64,6 +64,20 @@
       "when": 1773438369566,
       "tag": "0008_luxuriant_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1773438790670,
+      "tag": "0009_silly_wiccan",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1773438790700,
+      "tag": "0010_seed_benchmarks",
+      "breakpoints": true
     }
   ]
 }

@@ -18,6 +18,10 @@ import {
   logSession,
   logSessionSchema,
 } from "./tools/log-session.js";
+import {
+  getProgress,
+  getProgressSchema,
+} from "./tools/get-progress.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -100,6 +104,31 @@ server.tool(
       };
     }
     return logSession(parsed.data);
+  }
+);
+
+server.tool(
+  "get_progress",
+  "View progress trends for a specific exercise and/or current benchmark standings. Pass exercise_id or exercise_name for exercise-specific volume/performance trends. Benchmarks (pull-ups, push-ups, squats, running) are always included. Optional weeks parameter controls history depth (default 8).",
+  { input: z.string().describe("JSON object with optional exercise_id, exercise_name, and weeks fields.") },
+  async (params) => {
+    let raw: unknown;
+    try {
+      raw = JSON.parse(params.input);
+    } catch {
+      return {
+        content: [{ type: "text" as const, text: "Invalid JSON input. Provide a valid JSON object." }],
+        isError: true,
+      };
+    }
+    const parsed = getProgressSchema.safeParse(raw);
+    if (!parsed.success) {
+      return {
+        content: [{ type: "text" as const, text: `Invalid input: ${parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ")}` }],
+        isError: true,
+      };
+    }
+    return getProgress(parsed.data);
   }
 );
 

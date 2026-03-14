@@ -149,3 +149,13 @@ export const healthObservations = sqliteTable("health_observations", {
   notes: text("notes"),
   createdAt: text("created_at").notNull(),
 });
+
+export const benchmarks = sqliteTable("benchmarks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  goalComponent: text("goal_component").notNull().unique(),
+  targetValue: text("target_value").notNull(),
+  currentValue: text("current_value"),
+  unit: text("unit").notNull(),
+  lastTestedDate: text("last_tested_date"),
+  createdAt: text("created_at").notNull(),
+});

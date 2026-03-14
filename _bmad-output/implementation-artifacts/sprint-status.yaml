@@ -54,14 +54,14 @@ development_status:
   2-3-injury-responsive-plan-adjustment: done
   epic-2-retrospective: optional
 
-  epic-3: in-progress
+  epic-3: done
   3-1-log-completed-session: done
-  3-2-injury-status-ad-hoc-injury-logging: review
-  3-3-injury-protocol-data-health-observations: review
+  3-2-injury-status-ad-hoc-injury-logging: done
+  3-3-injury-protocol-data-health-observations: done
   epic-3-retrospective: optional
 
-  epic-4: backlog
-  4-1-progress-trends-benchmarks: backlog
+  epic-4: in-progress
+  4-1-progress-trends-benchmarks: in-progress
   4-2-bottleneck-identification-running-volume-rule: backlog
   epic-4-retrospective: optional
 

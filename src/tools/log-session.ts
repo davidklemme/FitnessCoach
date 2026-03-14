@@ -6,6 +6,7 @@ import {
   sessionLogEntries,
   injuryStatusLog,
   healthObservations,
+  benchmarks,
 } from "../db/schema.js";
 import { eq, and } from "drizzle-orm";
 import { log } from "../lib/logger.js";
@@ -133,6 +134,13 @@ export const logSessionSchema = z.object({
   health: healthSchema
     .optional()
     .describe("Health observations (sleep, energy, soreness) for this date"),
+  benchmark_test: z
+    .object({
+      goal_component: z.string().describe("Goal component name (e.g. pull_ups, push_ups, squats, running_5k)"),
+      value: z.string().describe("Test result value (e.g. '15', '22:30')"),
+    })
+    .optional()
+    .describe("Benchmark test result — updates the benchmarks table for this goal component"),
 }).refine(
   (data) => {
     // Must have exercises OR ad_hoc_injury OR health-only
@@ -302,12 +310,28 @@ export async function logSession(
         }
       }
 
+      // --- Benchmark update (Story 4.1) ---
+      let benchmarkUpdated = false;
+      if (params.benchmark_test) {
+        const updated = database
+          .update(benchmarks)
+          .set({
+            currentValue: params.benchmark_test.value,
+            lastTestedDate: params.date,
+          })
+          .where(eq(benchmarks.goalComponent, params.benchmark_test.goal_component))
+          .run();
+
+        benchmarkUpdated = updated.changes > 0;
+      }
+
       return {
         sessionLogId,
         entryCount,
         upserted,
         injuryLogId,
         healthObservationId,
+        benchmarkUpdated,
         isAdHocInjury,
         isHealthOnly,
       };
@@ -345,6 +369,11 @@ export async function logSession(
     }
     if (result.healthObservationId !== null) {
       response.healthObservationId = result.healthObservationId;
+    }
+    if (result.benchmarkUpdated) {
+      response.benchmarkUpdated = true;
+      response.benchmarkComponent = params.benchmark_test!.goal_component;
+      response.benchmarkValue = params.benchmark_test!.value;
     }
 
     return {
